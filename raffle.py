@@ -5,9 +5,9 @@ ntickets = 5
 prizerand = []
 prizeseq = []
 prizes = [5000,3000,1900]
-for i in tqdm(range(100000)):
-    prizerand = prizerand + [0]
-    prizeseq = prizeseq + [0]
+for i in tqdm(range(1000000)):
+    prizerand.append(0)
+    prizeseq.append(0)
     winners = np.random.choice(9900,3)
     ticketsrand = np.random.choice(9900,ntickets)
     t = np.random.randint(9900-ntickets+1)
