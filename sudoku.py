@@ -19,7 +19,11 @@ for x in range(9):
                 else:
                     sdk[x,y,z] = 0
                     
+#Build the RHS matrix
+rhs = np.ones((729,1))          
+
 #Build the LHS matrix
+#Start with the 324 equations that are always the same
 lhs = np.zeros((324,729))
 for x in range(9):
     for y in range(9):
@@ -42,8 +46,12 @@ for x in range(9):
                     if int(a/3)==i and int(b/3)==j:
                         lhs[i*27+j*9+z+243,v] = 1
             
-rhs = np.ones((729,1))
-            
+#Add the given numbers to the LHS and RHS matrix
+given = list(zip(np.where(sdk==1)[0],np.where(sdk==1)[1],np.where(sdk==1)[2]))
+for x,y,z in given:
+    v = x*81 + y*9 + z
+    lhsappend = np.zeros(1,729)
+    lhsappend[1,v] = 1
             
 
 
