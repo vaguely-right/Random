@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy import linalg as la
+import matplotlib.pyplot as plt
 
 #Get the example data file as a Pandas dataframe and convert to a numpy array
 fname = 'https://github.com/vaguely-right/Random/blob/master/sdk_in.xlsx?raw=true'
@@ -105,8 +106,9 @@ for x,y,z in given:
 #%%
 #Solve the system of equations
 a=la.pinv(lhs).dot(rhs)
-
-    
+a=la.inv(lhs.transpose().dot(lhs)).dot(lhs.transpose().dot(rhs))
+plt.hist(a,bins=100)
+a=la.lstsq(lhs,rhs)[0]
 
 
 
