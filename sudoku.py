@@ -139,7 +139,8 @@ for x,y,z in given:
 
 #%%
 #Get the example data file as a Pandas dataframe and convert to a numpy array
-fname = 'https://github.com/vaguely-right/Random/blob/master/sdk_in.xlsx?raw=true'
+#fname = 'https://github.com/vaguely-right/Random/blob/master/sdk_in.xlsx?raw=true'
+fname = 'https://github.com/vaguely-right/Random/blob/master/sdk_wicked.xlsx?raw=true'
 sdk_in = pd.read_excel(fname,header=None)
 sdk_np = sdk_in.to_numpy()
 
@@ -166,15 +167,28 @@ for x,y,z in given:
     rhs = np.append(rhs,rhsadd,axis=0)
 
 #%%
+#Set the tolerance level (decimel places)
+tol = 3
 #Solve the system of equations
-a=la.pinv(lhs).dot(rhs)
-a=la.inv(lhs.transpose().dot(lhs)).dot(lhs.transpose().dot(rhs))
-plt.hist(a,bins=100)
-a=la.lstsq(lhs,rhs)[0]
+a = la.lstsq(lhs,rhs)[0]
+#Get the indices of the values equal to 1
+b = np.where(np.round(a,tol)==1)[0]
+solved = []
+for v in b:
+    x = int(v/81)
+    y = int((v-x*81)/9)
+    z = int((v-x*81-y*9))
+    solved.append((x,y,z))
 
 
 
-
+negatives = np.where(np.round(a,tol)==0)[0]
+for v in negatives:
+    lhsadd = np.zeros((1,729))
+    lhsadd[0,v] = 1
+    rhsadd = np.zeros((1,1))
+    lhs = np.append(lhs,lhsadd,axis=0)
+    rhs = np.append(rhs,rhsadd,axis=0)
 
 
 
