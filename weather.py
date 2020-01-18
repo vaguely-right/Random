@@ -25,6 +25,21 @@ def getHourlyData(stationID, year, month):
 #It looks like the API has changed so rows don't need to be skipped anymore
     return pd.read_csv(api_endpoint)
 
+#Trying to write a function to get daily data instead
+#Kinda working, but only returns data for January of the specified year
+def getDailyData(stationID, year, month):
+    base_url = "https://climate.weather.gc.ca/climate_data/bulk_data_e.html?"
+    query_url = "format=csv&stationID={}&Year={}&Month={}&timeframe=2".format(stationID, year, month)
+    api_endpoint = base_url + query_url
+    return pd.read_csv(api_endpoint)
+
+def getMonthlyData(stationID, year, month):
+    base_url = "https://climate.weather.gc.ca/climate_data/bulk_data_e.html?"
+    query_url = "format=csv&stationID={}&Year={}&Month={}&timeframe=3".format(stationID, year, month)
+    api_endpoint = base_url + query_url
+    return pd.read_csv(api_endpoint)
+
+
 #%% Getting data from New Sarepta, stationID 46911
 #stationID = 51442
 stationID = 46911
@@ -52,11 +67,11 @@ plt.xlabel('Time')
 plt.show()
 
 #%%
-#Get station IDs, not completed yet
+#Get station IDs
 # Specify Parameters
 province = "AB"      # Which province to parse?
-start_year = "2019"  # I want the results to go back to at least 2006 or earlier
-max_pages = 5        # Number of maximum pages to parse, EC's limit is 100 rows per page, there are about 500 stations in BC with data going back to 2006
+start_year = "2020"  # I want the results to go back to at least 2006 or earlier
+max_pages = 10        # Number of maximum pages to parse, EC's limit is 100 rows per page, there are about 500 stations in BC with data going back to 2006
 
 # Store each page in a list and parse them later
 soup_frames = []
@@ -74,9 +89,44 @@ for i in range(max_pages):
     soup = BeautifulSoup(response.text, 'html.parser') # Parse with Beautiful Soup
     soup_frames.append(soup)
 
+station_data = []
 
+for soup in soup_frames: # For each soup
+    forms = soup.findAll("form", {"id" : re.compile('stnRequest*')}) # We find the forms with the stnRequest* ID using regex 
+    for form in forms:
+        try:
+            # The stationID is a child of the form
+            station = form.find("input", {"name" : "StationID"})['value']
+            
+            # The station name is a sibling of the input element named lstProvince
+            name = form.find("input", {"name" : "lstProvince"}).find_next_siblings("div")[0].text
+            
+            # The intervals are listed as children in a 'select' tag named timeframe
+            timeframes = form.find("select", {"name" : "timeframe"}).findChildren()
+            intervals =[t.text for t in timeframes]
+            
+            # We can find the min and max year of this station using the first and last child
+            years = form.find("select", {"name" : "Year"}).findChildren()            
+            min_year = years[0].text
+            max_year = years[-1].text
+            
+            # Store the data in an array
+            data = [station, name, intervals, min_year, max_year]
+            station_data.append(data)
+        except:
+            pass
 
+# Create a pandas dataframe using the collected data and give it the appropriate column names
+stations_df = pd.DataFrame(station_data, columns=['StationID', 'Name', 'Intervals', 'Year Start', 'Year End'])
+stations_df.head()
+len(stations_df)
+#There are 731 weather stations in Alberta with data back to at least 2000
+#There are 275 stations with data to at least 2019
+#There are 267 stations with data in 2020
+stations_df = stations_df[stations_df['Year End'] == '2020']
+#Ok, now there are 264
 
+#%%
 
 
 
