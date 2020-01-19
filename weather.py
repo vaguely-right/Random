@@ -1,5 +1,6 @@
 #Playing around with Environment Canada weather data
 #Methods and some functions from https://github.com/csianglim/weather-gc-ca-python
+#Blog post is at https://www.ubcenvision.com/blog/2017/11/30/jupyter-part1.html
 
 import pandas as pd
 import numpy as np
@@ -26,10 +27,10 @@ def getHourlyData(stationID, year, month):
     return pd.read_csv(api_endpoint)
 
 #Trying to write a function to get daily data instead
-#Kinda working, but only returns data for January of the specified year
-def getDailyData(stationID, year, month):
+#Daily data come year by year
+def getDailyData(stationID, year):
     base_url = "https://climate.weather.gc.ca/climate_data/bulk_data_e.html?"
-    query_url = "format=csv&stationID={}&Year={}&Month={}&timeframe=2".format(stationID, year, month)
+    query_url = "format=csv&stationID={}&Year={}&timeframe=2".format(stationID, year, month)
     api_endpoint = base_url + query_url
     return pd.read_csv(api_endpoint)
 
@@ -38,33 +39,6 @@ def getMonthlyData(stationID, year, month):
     query_url = "format=csv&stationID={}&Year={}&Month={}&timeframe=3".format(stationID, year, month)
     api_endpoint = base_url + query_url
     return pd.read_csv(api_endpoint)
-
-
-#%% Getting data from New Sarepta, stationID 46911
-#stationID = 51442
-stationID = 46911
-start_date = datetime.strptime('Sep2019', '%b%Y')
-end_date = datetime.strptime('Jan2020', '%b%Y')
-
-frames = []
-for dt in rrule.rrule(rrule.MONTHLY, dtstart=start_date, until=end_date):
-    df = getHourlyData(stationID, dt.year, dt.month)
-    frames.append(df)
-
-weather_data = pd.concat(frames)
-weather_data['Date/Time'] = pd.to_datetime(weather_data['Date/Time'])
-weather_data['Temp (°C)'] = pd.to_numeric(weather_data['Temp (°C)'])
-
-
-#%%
-%matplotlib inline
-sns.set_style('whitegrid')
-fig = plt.figure(figsize=(15,5))
-plt.plot(weather_data['Date/Time'], weather_data['Temp (°C)'], '-o', alpha=0.8, markersize=2)
-plt.plot(weather_data['Date/Time'], weather_data['Temp (°C)'].rolling(window=250,center=False).mean(), '-k', alpha=1.0)
-plt.ylabel('Temp (°C)')
-plt.xlabel('Time')
-plt.show()
 
 #%%
 #Get station IDs
@@ -125,6 +99,60 @@ len(stations_df)
 #There are 267 stations with data in 2020
 stations_df = stations_df[stations_df['Year End'] == '2020']
 #Ok, now there are 264
+
+
+#%% Getting data from New Sarepta, stationID 46911
+#stationID = 51442
+stationID = 46911
+start_date = datetime.strptime('Sep2018', '%b%Y')
+end_date = datetime.strptime('Jan2020', '%b%Y')
+
+frames = []
+for dt in rrule.rrule(rrule.MONTHLY, dtstart=start_date, until=end_date):
+    df = getHourlyData(stationID, dt.year, dt.month)
+    frames.append(df)
+
+weather_data = pd.concat(frames)
+weather_data['Date/Time'] = pd.to_datetime(weather_data['Date/Time'])
+weather_data['Temp (°C)'] = pd.to_numeric(weather_data['Temp (°C)'])
+
+#%%
+sns.set_style('whitegrid')
+fig = plt.figure(figsize=(15,5))
+plt.plot(weather_data['Date/Time'], weather_data['Temp (°C)'], '-o', alpha=0.8, markersize=2)
+plt.plot(weather_data['Date/Time'], weather_data['Temp (°C)'].rolling(window=168,center=False).mean(), '-k', alpha=1.0)
+plt.ylabel('Temp (°C)')
+plt.xlabel('Time')
+plt.show()
+
+
+#%% Getting data from New Sarepta, stationID 46911
+#Doing this for daily data now instead of monthly
+#stationID = 51442
+stationID = 46911
+start_date = datetime.strptime('2010', '%Y')
+end_date = datetime.strptime('2020', '%Y')
+
+frames = []
+for dt in rrule.rrule(rrule.YEARLY, dtstart=start_date, until=end_date):
+    df = getDailyData(stationID, dt.year)
+    frames.append(df)
+
+weather_data = pd.concat(frames)
+weather_data['Date/Time'] = pd.to_datetime(weather_data['Date/Time'])
+weather_data['Mean Temp (°C)'] = pd.to_numeric(weather_data['Mean Temp (°C)'])
+weather_data['Min Temp (°C)'] = pd.to_numeric(weather_data['Min Temp (°C)'])
+weather_data['Max Temp (°C)'] = pd.to_numeric(weather_data['Max Temp (°C)'])
+
+#%%
+sns.set_style('whitegrid')
+fig = plt.figure(figsize=(15,5))
+plt.plot(weather_data['Date/Time'], weather_data['Mean Temp (°C)'], '-o', alpha=0.8, markersize=2)
+plt.plot(weather_data['Date/Time'], weather_data['Mean Temp (°C)'].rolling(window=7,center=False).mean(), '-k', alpha=1.0)
+plt.ylabel('Mean Temp (°C)')
+plt.xlabel('Time')
+plt.show()
+
 
 #%%
 
