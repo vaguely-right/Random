@@ -30,13 +30,13 @@ def getHourlyData(stationID, year, month):
 #Daily data come year by year
 def getDailyData(stationID, year):
     base_url = "https://climate.weather.gc.ca/climate_data/bulk_data_e.html?"
-    query_url = "format=csv&stationID={}&Year={}&timeframe=2".format(stationID, year, month)
+    query_url = "format=csv&stationID={}&Year={}&timeframe=2".format(stationID, year)
     api_endpoint = base_url + query_url
     return pd.read_csv(api_endpoint)
 
-def getMonthlyData(stationID, year, month):
+def getMonthlyData(stationID, year):
     base_url = "https://climate.weather.gc.ca/climate_data/bulk_data_e.html?"
-    query_url = "format=csv&stationID={}&Year={}&Month={}&timeframe=3".format(stationID, year, month)
+    query_url = "format=csv&stationID={}&Year={}&timeframe=3".format(stationID, year)
     api_endpoint = base_url + query_url
     return pd.read_csv(api_endpoint)
 
