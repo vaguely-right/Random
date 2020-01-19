@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from fuzzywuzzy import fuzz
+from tqdm import tqdm
 
 
 #%%
@@ -100,6 +101,16 @@ len(stations_df)
 stations_df = stations_df[stations_df['Year End'] == '2020']
 #Ok, now there are 264
 
+#%%
+#Finding Edmonton stations
+stations_df[stations_df.Name.str.contains('EDMONTON')]
+print('Namao has the longest record, going back to 1955')
+print('Station ID is 1868')
+
+stations_df[stations_df['Year Start'] < '1990']
+print('Not many stations active in 2020 with pre-1990 data')
+print('Namao has a gap in the data')
+print('Let\'s try Fort Saskatchewan, station ID 1886')
 
 #%% Getting data from New Sarepta, stationID 46911
 #stationID = 51442
@@ -130,7 +141,7 @@ plt.show()
 #Doing this for daily data now instead of monthly
 #stationID = 51442
 stationID = 46911
-start_date = datetime.strptime('2010', '%Y')
+start_date = datetime.strptime('2008', '%Y')
 end_date = datetime.strptime('2020', '%Y')
 
 frames = []
@@ -155,15 +166,78 @@ plt.show()
 
 
 #%%
+#Get the data for Namao back to 1955
+stationID = 1868
+start_date = datetime.strptime('1955', '%Y')
+end_date = datetime.strptime('2020', '%Y')
 
+frames = []
+for dt in tqdm(rrule.rrule(rrule.YEARLY, dtstart=start_date, until=end_date)):
+    df = getDailyData(stationID, dt.year)
+    frames.append(df)
 
+weather_data = pd.concat(frames)
+weather_data['Date/Time'] = pd.to_datetime(weather_data['Date/Time'])
+weather_data['Mean Temp (°C)'] = pd.to_numeric(weather_data['Mean Temp (°C)'])
+weather_data['Min Temp (°C)'] = pd.to_numeric(weather_data['Min Temp (°C)'])
+weather_data['Max Temp (°C)'] = pd.to_numeric(weather_data['Max Temp (°C)'])
 
+#%%
+sns.set_style('whitegrid')
+fig = plt.figure(figsize=(15,5))
+plt.plot(weather_data['Date/Time'], weather_data['Mean Temp (°C)'], '-o', alpha=0.8, markersize=2)
+plt.plot(weather_data['Date/Time'], weather_data['Mean Temp (°C)'].rolling(window=7,center=False).mean(), '-k', alpha=1.0)
+plt.ylabel('Mean Temp (°C)')
+plt.xlabel('Time')
+plt.show()
 
+#%%
+#Get the data for Fort Saskatchewan back to 1958
+stationID = 1886
+start_date = datetime.strptime('1958', '%Y')
+end_date = datetime.strptime('2020', '%Y')
 
+frames = []
+for dt in tqdm(rrule.rrule(rrule.YEARLY, dtstart=start_date, until=end_date)):
+    df = getDailyData(stationID, dt.year)
+    frames.append(df)
 
+weather_data = pd.concat(frames)
+weather_data['Date/Time'] = pd.to_datetime(weather_data['Date/Time'])
+weather_data['Mean Temp (°C)'] = pd.to_numeric(weather_data['Mean Temp (°C)'])
+weather_data['Min Temp (°C)'] = pd.to_numeric(weather_data['Min Temp (°C)'])
+weather_data['Max Temp (°C)'] = pd.to_numeric(weather_data['Max Temp (°C)'])
 
+#%%
+sns.set_style('whitegrid')
+fig = plt.figure(figsize=(15,5))
+plt.plot(weather_data['Date/Time'], weather_data['Mean Temp (°C)'], '-o', alpha=0.8, markersize=2)
+plt.plot(weather_data['Date/Time'], weather_data['Mean Temp (°C)'].rolling(window=7,center=False).mean(), '-k', alpha=1.0)
+plt.ylabel('Mean Temp (°C)')
+plt.xlabel('Time')
+plt.show()
 
+#%%
+#Look at the weather trends over time
+#Get the calendar day average
+df = weather_data[['Date/Time','Year','Month','Day','Mean Temp (°C)','Min Temp (°C)','Max Temp (°C)']]
+mean_temp = df.groupby(['Month','Day']).mean().reset_index()
+mean_temp.columns = ['Month','Day','Year','Avg Mean','Avg Min','Avg Max']
 
+sns.set_style('whitegrid')
+fig = plt.figure(figsize=(15,5))
+plt.plot(mean_temp['Avg Mean'], '-o', alpha=0.8, markersize=2, color='green')
+plt.plot(mean_temp['Avg Min'], '-o', alpha=0.8, markersize=2, color='blue')
+plt.plot(mean_temp['Avg Max'], '-o', alpha=0.8, markersize=2,color='red')
+
+sns.set_style('whitegrid')
+fig = plt.figure(figsize=(15,5))
+plt.plot(mean_temp[mean_temp.Month==1]['Avg Mean'], '-o', alpha=0.8, markersize=2, color='green')
+plt.plot(mean_temp[mean_temp.Month==1]['Avg Min'], '-o', alpha=0.8, markersize=2, color='blue')
+plt.plot(mean_temp[mean_temp.Month==1]['Avg Max'], '-o', alpha=0.8, markersize=2,color='red')
+plt.plot(df[df.Year==2020]['Mean Temp (°C)'], '-o', alpha=0.8, markersize=2,color='darkgreen')
+plt.plot(df[df.Year==2020]['Min Temp (°C)'], '-o', alpha=0.8, markersize=2,color='darkblue')
+plt.plot(df[df.Year==2020]['Max Temp (°C)'], '-o', alpha=0.8, markersize=2,color='darkred')
 
 
 
