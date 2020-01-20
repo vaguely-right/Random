@@ -15,6 +15,9 @@ import re
 from fuzzywuzzy import fuzz
 from tqdm import tqdm
 
+pd.options.display.max_columns = 16
+pd.options.display.width = 156
+
 #%%
 
 def getDailyData(stationID, year):
@@ -99,15 +102,22 @@ stations_df['YearEnd'] = pd.to_numeric(stations_df['YearEnd'])
 len(stations_df)
 stations_df.YearStart.hist()
 stations_df.YearEnd.hist()
-stations_df['StationLife'] = stations_df.YearEnd - stations_df.YearStart
+stations_df['StationLife'] = stations_df.YearEnd - stations_df.YearStart + 1
 stations_df.StationLife.hist()
 
+sum(stations_df.Intervals.apply(lambda x:  'Daily' in x))
 
+#%%
+#Get all of the daily station data in Alberta into one data frame
+stations_df1 = stations_df[stations_df.Intervals.apply(lambda x: 'Daily' in x)].copy()
 
+frames = []
+for i,start,end in tqdm(zip(stations_df1.StationID,stations_df1.YearStart,stations_df1.YearEnd)):
+    df = getStationData(i,start,end)
+    print('Done station ',i)
+    frames.append(df)
 
-
-
-
+daily_df = pd.concat(frames)
 
 
 
