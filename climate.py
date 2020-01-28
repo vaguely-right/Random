@@ -112,9 +112,10 @@ sum(stations_df.Intervals.apply(lambda x:  'Daily' in x))
 stations_df1 = stations_df[stations_df.Intervals.apply(lambda x: 'Daily' in x)].copy()
 
 frames = []
-for i,start,end in tqdm(zip(stations_df1.StationID,stations_df1.YearStart,stations_df1.YearEnd)):
+counter = zip(stations_df1.StationID,stations_df1.YearStart,stations_df1.YearEnd)
+for i,start,end in tqdm(counter):
+    print('Working on station ',i)
     df = getStationData(i,start,end)
-    print('Done station ',i)
     frames.append(df)
 
 daily_df = pd.concat(frames)
