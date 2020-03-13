@@ -100,16 +100,17 @@ df = pd.read_csv(infl)
 df.drop(['Lat','Long'],axis=1,inplace=True)
 df.rename(columns={'Country/Region' : 'Country', 'Province/State' : 'Province'},inplace=True)
 
+#%% Sum by country
+dfc = df.groupby('Country').sum()
+
 #%% Plot the Canadian data
 can = df[df.Country=='Canada'].drop('Country',axis=1)
 can.set_index('Province',inplace=True)
 can = can.transpose()
 can.plot(logy=True)
 
-#%% Plot data for place with over 1000 cases
-ob = df[np.max(df,axis=1)>=1000]
-ob.set_index('Country',inplace=True)
-ob.drop(['Province'],axis=1,inplace=True)
+#%% Plot data for countries with over 1000 cases
+ob = dfc[np.max(dfc,axis=1)>=1000]
 ob = ob.transpose()
 ob.drop(['China'],axis=1,inplace=True)
 ob.plot(logy=True)
