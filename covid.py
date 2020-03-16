@@ -109,12 +109,24 @@ can.set_index('Province',inplace=True)
 can = can.transpose()
 can.plot(logy=True)
 
+can[can.Alberta>1].Alberta.plot(logy=True)
+
 #%% Plot data for countries with over 1000 cases
 ob = dfc[np.max(dfc,axis=1)>=1000]
 ob = ob.transpose()
 ob.drop(['China'],axis=1,inplace=True)
-ob.plot(logy=True)
+ob.plot(logy=True,ylim=(100,100000))
 
+#%% Plot countries since they hit 100 cases
+ob = dfc[np.max(dfc,axis=1)>=1000]
+ob = ob.transpose()
+ob.drop(['China'],axis=1,inplace=True)
+frames = []
+for c in ob.columns:
+    frames.append(ob[ob[c]>=90].reset_index()[c].to_frame())
+hundo = pd.concat(frames,axis=1)
+hundo.plot(logy=True,ylim=(100,100000))
+    
 #%%
 import seaborn as sns
 sns.set()
