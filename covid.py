@@ -3,6 +3,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
 pd.set_option('display.width',150)
 pd.set_option('display.max_columns',16)
 mpl.rcParams['figure.figsize'] = [12.0,8.0]
@@ -142,6 +144,35 @@ g = sns.lmplot(x="sepal_length", y="sepal_width", hue="species",
 g.set_axis_labels("Sepal length (mm)", "Sepal width (mm)")
 
 p = sns.lmplot(x='index',y='Alberta',data=can)
+
+
+#%% Get the new data format
+infl = r'https://covid.ourworldindata.org/data/total_cases.csv'
+df = pd.read_csv(infl)
+df.set_index('date',inplace=True)
+
+#%% Get the outbreak data
+ob = df[df.max().index[df.max().values>=1000]]
+ob.drop(['China','World'],axis=1,inplace=True)
+
+frames = []
+for c in ob.columns:
+    frames.append(ob[ob[c]>=90].reset_index()[c].to_frame())
+hundo = pd.concat(frames,axis=1)
+
+
+hundo.plot(logy=True,ylim=(100,100000))
+
+
+#%% Linear (log) regression
+X = np.log(hundo.Italy).to_numpy().reshape(-1,1)
+Y = hundo.index.to_numpy().reshape(-1,1)
+regr = LinearRegression()
+regr.fit(X,Y)
+
+model = sm.OLS(np.log(hundo.Italy).to_numpy(),hundo.index.to_numpy(),missing='drop').fit()
+
+
 
 
 
