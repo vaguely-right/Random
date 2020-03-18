@@ -165,12 +165,30 @@ hundo.plot(logy=True,ylim=(100,100000))
 
 
 #%% Linear (log) regression
-X = np.log(hundo.Italy).to_numpy().reshape(-1,1)
-Y = hundo.index.to_numpy().reshape(-1,1)
+XY = np.log(hundo.Italy.dropna())
+X = np.log(hundo.Italy.dropna()).to_numpy().reshape(-1,1)
+Y = hundo.Italy.dropna().index.to_numpy().reshape(-1,1)
 regr = LinearRegression()
 regr.fit(X,Y)
 
-model = sm.OLS(np.log(hundo.Italy).to_numpy(),hundo.index.to_numpy(),missing='drop').fit()
+Y_pred = regr.predict(X)
+
+
+#%% For all countries
+frames = []
+for country in hundo.columns:
+    X = hundo[country].dropna().index.to_numpy().reshape(-1,1)    
+    Y = np.log(hundo[country].dropna()).to_numpy().reshape(-1,1)
+    regr = LinearRegression()
+    regr.fit(X,Y)
+    pred = np.exp(pd.DataFrame(regr.predict(X),columns=[country+'_fit']))
+    frames.append(pred)
+
+dfpred = pd.concat([hundo,pd.concat(frames,axis=1)],axis=1)
+dfpred.plot(logy=True)
+
+
+#%% Do 5-day rolling regression
 
 
 
