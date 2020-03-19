@@ -152,16 +152,16 @@ df = pd.read_csv(infl)
 df.set_index('date',inplace=True)
 
 #%% Get the outbreak data
-ob = df[df.max().index[df.max().values>=1000]]
-ob.drop(['China','World'],axis=1,inplace=True)
+ob = df[df.max().index[df.gt(100).sum()>=10]]
+ob.drop(['China','World','International'],axis=1,inplace=True)
 
 frames = []
 for c in ob.columns:
-    frames.append(ob[ob[c]>=90].reset_index()[c].to_frame())
+    frames.append(ob[ob[c]>=100].reset_index()[c].to_frame())
 hundo = pd.concat(frames,axis=1)
 
 
-hundo.plot(logy=True,ylim=(100,100000))
+hundo.plot(logy=True,ylim=(100,10000),xlim=(0,10))
 
 
 #%% Linear (log) regression
@@ -188,7 +188,7 @@ dfpred = pd.concat([hundo,pd.concat(frames,axis=1)],axis=1)
 dfpred.plot(logy=True)
 
 
-#%% Do 5-day rolling regression
+#%% Calculate the rolling increase day by day (instantaneous first derivative)
 
 
 
