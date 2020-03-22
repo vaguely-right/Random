@@ -113,6 +113,13 @@ can.plot(logy=True)
 
 can[can.Alberta>1].Alberta.plot(logy=True)
 
+#%% Plot the Canadian data in days since 50th case
+frames = []
+for p in can.columns:
+    frames.append(can[can[p]>=50].reset_index()[p].to_frame())
+fiddy = pd.concat(frames,axis=1)
+
+
 #%% Plot data for countries with over 1000 cases
 ob = dfc[np.max(dfc,axis=1)>=1000]
 ob = ob.transpose()
@@ -147,11 +154,11 @@ p = sns.lmplot(x='index',y='Alberta',data=can)
 
 
 #%% Get the new data format
-infl = r'https://covid.ourworldindata.org/data/total_cases.csv'
+infl = r'https://covid.ourworldindata.org/data/ecdc/total_cases.csv'
 df = pd.read_csv(infl)
 df.set_index('date',inplace=True)
 
-#%% Get the outbreak data
+#%% Get the outbreak data for countries with at least 10 days since their 100th case
 ob = df[df.max().index[df.gt(100).sum()>=10]]
 ob.drop(['China','World','International'],axis=1,inplace=True)
 
@@ -165,23 +172,27 @@ hundo.plot(logy=True,ylim=(100,10000),xlim=(0,10))
 
 
 #%% Linear (log) regression
-XY = np.log(hundo.Italy.dropna())
-X = np.log(hundo.Italy.dropna()).to_numpy().reshape(-1,1)
-Y = hundo.Italy.dropna().index.to_numpy().reshape(-1,1)
+XY = np.log(hundo.Italy.dropna()).to_frame()
+Y = np.log(hundo.Italy.dropna()).to_numpy().reshape(-1,1)
+X = hundo.Italy.dropna().index.to_numpy().reshape(-1,1)
 regr = LinearRegression()
 regr.fit(X,Y)
 
 Y_pred = regr.predict(X)
 
+#%% Regression with numpy polyfit
+Y = np.log(hundo.Italy.dropna()).to_numpy()
+X = hundo.Italy.dropna().index.to_numpy()
+p = np.polyfit(X,Y,1)
+XY['fit'] = np.polyval(p,X)
 
 #%% For all countries
 frames = []
 for country in hundo.columns:
-    X = hundo[country].dropna().index.to_numpy().reshape(-1,1)    
-    Y = np.log(hundo[country].dropna()).to_numpy().reshape(-1,1)
-    regr = LinearRegression()
-    regr.fit(X,Y)
-    pred = np.exp(pd.DataFrame(regr.predict(X),columns=[country+'_fit']))
+    X = hundo[country].dropna().index.values
+    Y = np.log(hundo[country].dropna()).to_frame()
+    p = np.polyfit(X,Y,1)
+    pred = pd.DataFrame(np.exp(np.polyval(p,X)),columns=[country])
     frames.append(pred)
 
 dfpred = pd.concat([hundo,pd.concat(frames,axis=1)],axis=1)
@@ -189,6 +200,44 @@ dfpred.plot(logy=True)
 
 
 #%% Calculate the rolling increase day by day (instantaneous first derivative)
+d1 = hundo.rolling(2).max()/hundo.rolling(2).min()
+d1.plot()
+
+#Noisy as hell. Take the five-day smoothed first derivative
+ndays = 5
+d1 = np.cbrt(hundo.rolling(ndays+1).max()/hundo.rolling(ndays+1).min())
+d1.plot()
+
+#Calculate the instantaneous second derivative
+d2 = d1.rolling(2).max()/d1.rolling(2).min()
+d2.plot()
+d2[['Italy','South Korea','Japan','Iran']].plot()
+
+#Convert derivative to doubling time
+dbl = np.log(2)/np.log(d1)
+dbl.plot(logy=True)
+
+#%% Calculate the rolling five-day slope
+def get_slope(Y):
+    X = range(1,6)
+    p = np.polyfit(X,Y,1)
+    return p[0]
+
+
+ndays = 5
+frames = []
+for country in hundo.columns:
+    slope = np.log(hundo[country].dropna()).to_frame().rolling(ndays).apply(get_slope)
+    frames.append(slope)
+    
+d1 = pd.concat(frames,axis=1)
+d1.plot()
+
+
+
+
+
+
 
 
 
