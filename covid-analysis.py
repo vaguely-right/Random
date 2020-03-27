@@ -45,12 +45,13 @@ hundo.plot(logy=True)
 
 #%% Calculate the five-day smoothed first derivative
 ndays = 5
-d1 = np.cbrt(hundo.rolling(ndays+1).max()/hundo.rolling(ndays+1).min())
+frames = []
+for country in hundo.columns:
+    slope = np.log(hundo[country].dropna()).to_frame().rolling(ndays).apply(get_slope)
+    frames.append(slope)
+    
+d1 = pd.concat(frames,axis=1)
 d1.plot()
-
-#Convert derivative to doubling time
-dbl = np.log(2)/np.log(d1)
-dbl.plot(logy=True)
 
 #%% Find the countries with at least 20 days since the 100th case, plus Canada
 cols = list(d1.loc[20].dropna().index.values)
@@ -59,7 +60,6 @@ cols.remove('China')
 
 hundo[cols].plot(logy=True)
 d1[cols].plot()
-dbl[cols].plot()
 
 days = [2,3,4,5,6,7,14,21,28]
 growth = [2**(1/i)-1 for i in days]
