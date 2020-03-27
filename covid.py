@@ -74,7 +74,8 @@ df.set_index('date',inplace=True)
 
 #%% Get the outbreak data for countries with at least 10 days since their 100th case
 ob = df[df.max().index[df.gt(100).sum()>=10]]
-ob.drop(['China','World','International'],axis=1,inplace=True)
+#ob.drop(['China','World','International'],axis=1,inplace=True)
+ob.drop(['World','International'],axis=1,inplace=True)
 
 frames = []
 for c in ob.columns:
@@ -134,10 +135,15 @@ dbl.plot(logy=True)
 
 #%% Calculate the rolling five-day slope
 def get_slope(Y):
-    X = range(1,6)
+    n = len(Y)
+    X = range(0,n)
     p = np.polyfit(X,Y,1)
     return p[0]
 
+def get_d2(Y):
+    X = range(1,6)
+    p = np.polyfit(X,Y,2)
+    return p[0]*2
 
 ndays = 5
 frames = []
@@ -148,15 +154,30 @@ for country in hundo.columns:
 d1 = pd.concat(frames,axis=1)
 d1.plot()
 
+
+
 #%% Find the countries with at least 20 days since the 100th case, plus Canada
 cols = list(d1.loc[20].dropna().index.values)
 cols.append('Canada')
+cols.remove('China')
 
+hundo[cols].plot(logy=True)
 d1[cols].plot()
 
+days = [2,3,4,5,6,7,14,21,28]
+growth = [2**(1/i)-1 for i in days]
+
+#%% Make next-day predictions using a rolling linear function
+def make_pred(df):
+    Y = df.dropna().to_numpy()
+    X = df.dropna().index.values
+    n = X.max()+1
+    p = np.polyfit(X,Y,1)
+    pred = np.polyval(p,n)
+    return pred
 
 
-
+df.dropna().rolling(ndays).apply(make_pred)
 
 
 
